@@ -16,11 +16,21 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "cascade_pid_controller_node");
+    /// \note: ROS2 stuff
 
-    cascade_pid_controller::CascadePidControllerNode cascade_pid_controller;
+    rclcpp::init(argc, argv);
 
-    ros::spin();
+    rclcpp::NodeOptions options;
+
+    auto cascade_pid_controller_node = std::make_shared<cascade_pid_controller::CascadePidControllerNode>(options);
+
+    rclcpp::executors::MultiThreadedExecutor executor;
+
+    executor.add_node(cascade_pid_controller_node);
+
+    executor.spin();
+
+    rclcpp::shutdown();
 
     return 0;
 }

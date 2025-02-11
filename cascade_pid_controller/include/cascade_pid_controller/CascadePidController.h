@@ -12,11 +12,11 @@
 // https://www.gnu.org/licenses/.
 //---------------------------------------------------------------------------------------------------------------------
 
-#include <control_toolbox/pid.h>
-
+#include <control_toolbox/pid_ros.hpp>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <cascade_pid_controller/utils.hpp>
+
+#include "cascade_pid_controller/utils.hpp"
 
 namespace cascade_pid_controller {
 
@@ -25,12 +25,12 @@ class CascadePidController
   public:
     CascadePidController();
     ~CascadePidController();
-    void            init();
+    void            init(std::shared_ptr<rclcpp::Node> node);
     void            printInfo();
     void            reset();
-    Eigen::Vector3d updatePosPid(const Eigen::Vector3d error, ros::Duration dt);
-    Eigen::Vector3d updateVelPid(const Eigen::Vector3d error, const Eigen::Vector3d error_dot, ros::Duration dt);
-    double updateYawPid(double error, ros::Duration dt);
+    Eigen::Vector3d updatePosPid(const Eigen::Vector3d error, rclcpp::Duration dt);
+    Eigen::Vector3d updateVelPid(const Eigen::Vector3d error, const Eigen::Vector3d error_dot, rclcpp::Duration dt);
+    double updateYawPid(double error, rclcpp::Duration dt);
 
     void            accelerationToAttitude(
                        const Eigen::Vector3d    acc_des,
@@ -42,13 +42,11 @@ class CascadePidController
     utils::BlockLowPass _pos_err_x_lp, _pos_err_y_lp, _pos_err_z_lp, _pos_err_yaw_lp;
 
   private:
-    control_toolbox::Pid _pos_x_pid, _pos_y_pid, _pos_z_pid, _vel_x_pid, _vel_y_pid, _vel_z_pid, _yaw_pid;
-    ros::NodeHandle      _nh;
+    std::shared_ptr<control_toolbox::PidROS> _pos_x_pid, _pos_y_pid, _pos_z_pid, _vel_x_pid, _vel_y_pid, _vel_z_pid, _yaw_pid;
+    std::shared_ptr<rclcpp::Node> _nh;
 
     double _reference_v_x;
     double _reference_v_y;
     double _reference_v_z;
-
-    
 };
 } // namespace cascade_pid_controller

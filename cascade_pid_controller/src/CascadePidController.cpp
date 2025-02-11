@@ -16,24 +16,37 @@
 
 namespace cascade_pid_controller {
 
-CascadePidController::CascadePidController() : _nh(ros::NodeHandle("~")) {}
+CascadePidController::CascadePidController() {
+    // rclcpp::NodeOptions options;
+    // _nh = std::make_shared<rclcpp::Node>("pid_parameters_handler_node", options);
+    // RCLCPP_INFO(_nh->get_logger(), "Node '%s' created.", _nh->get_name());
+}
 
 CascadePidController::~CascadePidController() {}
 
-void CascadePidController::init()
+void CascadePidController::init(std::shared_ptr<rclcpp::Node> node)
 {
-    _nh = ros::NodeHandle("~");
-    _pos_x_pid.init(ros::NodeHandle(_nh, "pos/x"), false);
-    _pos_y_pid.init(ros::NodeHandle(_nh, "pos/y"), false);
-    _pos_z_pid.init(ros::NodeHandle(_nh, "pos/z"), false);
-    _vel_x_pid.init(ros::NodeHandle(_nh, "vel/x"), false);
-    _vel_y_pid.init(ros::NodeHandle(_nh, "vel/y"), false);
-    _vel_z_pid.init(ros::NodeHandle(_nh, "vel/z"), false);
-    _yaw_pid.init(ros::NodeHandle(_nh, "yaw"), false);
+    _nh = node;
 
     double loop_freq, v_filt_d_freq;
-    _nh.param<double>("loop_freq", loop_freq, 30.0);
-    _nh.param<double>("vel/filt_d_freq", v_filt_d_freq, 5.0);
+    v_filt_d_freq = _nh->declare_parameter<double>("vel/filt_d_freq", 5.0);
+    _nh->get_parameter("loop_freq", loop_freq);
+
+    _pos_x_pid = std::make_shared<control_toolbox::PidROS>(_nh, "pos/x");
+    _pos_y_pid = std::make_shared<control_toolbox::PidROS>(_nh, "pos/y");
+    _pos_z_pid = std::make_shared<control_toolbox::PidROS>(_nh, "pos/z");
+    _vel_x_pid = std::make_shared<control_toolbox::PidROS>(_nh, "vel/x");
+    _vel_y_pid = std::make_shared<control_toolbox::PidROS>(_nh, "vel/y");
+    _vel_z_pid = std::make_shared<control_toolbox::PidROS>(_nh, "vel/z");
+    _yaw_pid = std::make_shared<control_toolbox::PidROS>(_nh, "yaw");
+
+    _pos_x_pid->initPid();
+    _pos_y_pid->initPid();
+    _pos_z_pid->initPid();
+    _vel_x_pid->initPid();
+    _vel_y_pid->initPid();
+    _vel_z_pid->initPid();
+    _yaw_pid->initPid();
 
     _vel_x_deriv_lpf.set_dt(1.0/loop_freq);
     _vel_y_deriv_lpf.set_dt(1.0/loop_freq);
@@ -60,38 +73,37 @@ void CascadePidController::init()
 
 void CascadePidController::printInfo()
 {
-    ROS_INFO("Printing POS X PID INFO: \n");
-    _pos_x_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing POS X PID INFO: \n");
+    _pos_x_pid->printValues();
 
-    ROS_INFO("Printing POS Y PID INFO: \n");
-    _pos_y_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing POS Y PID INFO: \n");
+    _pos_y_pid->printValues();
 
-    ROS_INFO("Printing POS Z PID INFO: \n");
-    _pos_z_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing POS Z PID INFO: \n");
+    _pos_z_pid->printValues();
 
-    ROS_INFO("Printing VEL X PID INFO: \n");
-    _vel_x_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing VEL X PID INFO: \n");
+    _vel_x_pid->printValues();
 
-    ROS_INFO("Printing VEL Y PID INFO: \n");
-    _vel_y_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing VEL Y PID INFO: \n");
+    _vel_y_pid->printValues();
 
-    ROS_INFO("Printing VEL Z PID INFO: \n");
-    _vel_z_pid.printValues();
+    RCLCPP_INFO(_nh->get_logger(), "Printing VEL Z PID INFO: \n");
+    _vel_z_pid->printValues();
 
-    ROS_INFO("Printing YAW PID INFO: \n");
-    _yaw_pid.printValues();
-
+    RCLCPP_INFO(_nh->get_logger(), "Printing YAW PID INFO: \n");
+    _yaw_pid->printValues();
 }
 
 void CascadePidController::reset()
 {
-    _pos_x_pid.reset();
-    _pos_y_pid.reset();
-    _pos_z_pid.reset();
-    _vel_x_pid.reset();
-    _vel_y_pid.reset();
-    _vel_z_pid.reset();
-    _yaw_pid.reset();
+    _pos_x_pid->reset();
+    _pos_y_pid->reset();
+    _pos_z_pid->reset();
+    _vel_x_pid->reset();
+    _vel_y_pid->reset();
+    _vel_z_pid->reset();
+    _yaw_pid->reset();
 
     _vel_x_deriv_lpf.reset();
     _vel_y_deriv_lpf.reset();
@@ -103,7 +115,7 @@ void CascadePidController::reset()
     _pos_err_yaw_lp.reset();
 }
 
-Eigen::Vector3d CascadePidController::updatePosPid(const Eigen::Vector3d error, ros::Duration dt)
+Eigen::Vector3d CascadePidController::updatePosPid(const Eigen::Vector3d error, rclcpp::Duration dt)
 {
     Eigen::Vector3d vel_ref;
 
@@ -121,20 +133,20 @@ Eigen::Vector3d CascadePidController::updatePosPid(const Eigen::Vector3d error, 
     // vel_ref(0) = vxy * cos(alpha);
     // vel_ref(1) = vxy * sin(alpha);
     
-    vel_ref(0) = _pos_x_pid.computeCommand(ex, dt);
-    vel_ref(1) = _pos_y_pid.computeCommand(ey, dt);
-    vel_ref(2) = _pos_z_pid.computeCommand(ez, dt);
+    vel_ref(0) = _pos_x_pid->computeCommand(ex, dt);
+    vel_ref(1) = _pos_y_pid->computeCommand(ey, dt);
+    vel_ref(2) = _pos_z_pid->computeCommand(ez, dt);
 
     return vel_ref;
 }
 
-Eigen::Vector3d CascadePidController::updateVelPid(const Eigen::Vector3d error,const Eigen::Vector3d error_dot, ros::Duration dt)
+Eigen::Vector3d CascadePidController::updateVelPid(const Eigen::Vector3d error,const Eigen::Vector3d error_dot, rclcpp::Duration dt)
 {
     Eigen::Vector3d acc_cmd;
 
-    double ax = _vel_x_pid.computeCommand(error(0), error_dot(0), dt);
-    double ay = _vel_y_pid.computeCommand(error(1), error_dot(1), dt);
-    double az = _vel_z_pid.computeCommand(error(2), error_dot(2), dt);
+    double ax = _vel_x_pid->computeCommand(error(0), error_dot(0), dt);
+    double ay = _vel_y_pid->computeCommand(error(1), error_dot(1), dt);
+    double az = _vel_z_pid->computeCommand(error(2), error_dot(2), dt);
     
     acc_cmd(0) = ax;
     acc_cmd(1) = ay;
@@ -143,9 +155,9 @@ Eigen::Vector3d CascadePidController::updateVelPid(const Eigen::Vector3d error,c
     return acc_cmd;
 }
 
-double CascadePidController::updateYawPid(double error, ros::Duration dt)
+double CascadePidController::updateYawPid(double error, rclcpp::Duration dt)
 {
-    double yaw_rate = _yaw_pid.computeCommand(_pos_err_yaw_lp.update(error),dt);
+    double yaw_rate = _yaw_pid->computeCommand(_pos_err_yaw_lp.update(error),dt);
 
     // std::cout << "error: " << error << std::endl;
     // std::cout << "error_filt: " << _pos_err_yaw_lp.getState() << std::endl;

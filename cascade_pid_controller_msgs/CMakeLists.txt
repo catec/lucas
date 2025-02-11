@@ -12,31 +12,21 @@
 ## https://www.gnu.org/licenses/.
 ##---------------------------------------------------------------------------------------------------------------------
 
+cmake_minimum_required(VERSION 3.10...3.22)
 project(cascade_pid_controller_msgs)
-cmake_minimum_required(VERSION 3.5.1)
 
-##################################
-## Configure CATKIN dependecies ##
-##################################
+# ---- Configure CATKIN dependecies ----
+find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-find_package(catkin REQUIRED COMPONENTS
-   message_generation
-   std_msgs
-   geometry_msgs
+# ---- Declare ROS messages, services and actions ----
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/TrajCommand.msg"
+  "msg/State.msg"
+  DEPENDENCIES std_msgs geometry_msgs
 )
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-add_message_files(DIRECTORY msg)
-# add_service_files(DIRECTORY srv)
-
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
-
-###################################
-## CATKIN specific configuration ##
-###################################
-
-catkin_package(
-   CATKIN_DEPENDS message_runtime
-)
+ament_package()

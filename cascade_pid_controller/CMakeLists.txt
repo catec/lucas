@@ -12,7 +12,7 @@
 ## https://www.gnu.org/licenses/.
 ##---------------------------------------------------------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.10...3.22)
+cmake_minimum_required(VERSION 3.14.4)
 
 project(cascade_pid_controller DESCRIPTION "Cascade pid controller"
    LANGUAGES CXX
@@ -42,12 +42,13 @@ file(GLOB_RECURSE SRCS_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/
 
 # Note: for header-only libraries change all PUBLIC flags to INTERFACE and create an interface
 # target: add_library(${PROJECT_NAME} INTERFACE)
-add_library(${PROJECT_NAME} SHARED ${HDRS_FILES} ${SRCS_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+set(PROJECT_LIB_NAME ${PROJECT_NAME}_lib)
+add_library(${PROJECT_LIB_NAME} SHARED ${HDRS_FILES} ${SRCS_FILES})
+set_target_properties(${PROJECT_LIB_NAME} PROPERTIES CXX_STANDARD 17)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(${PROJECT_LIB_NAME} PUBLIC
    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-   $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+   $<INSTALL_INTERFACE:include/${PROJECT_LIB_NAME}-${PROJECT_VERSION}>
 )
 
 # ---- Dependencies ----
@@ -61,3 +62,31 @@ endif(${BUILD_UTILS})
 # ---- General info & Build files ----
 include(cmake_stuff/buildFiles.cmake REQUIRED)
 include(cmake_stuff/printInfo.cmake REQUIRED)
+
+# ---- Installation ----
+
+install(
+   TARGETS ${PROJECT_LIB_NAME}
+   ARCHIVE DESTINATION lib
+   LIBRARY DESTINATION lib
+   RUNTIME DESTINATION bin
+)
+
+install(
+   TARGETS     cascade_pid_controller_node
+   DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+   DIRECTORY   config launch
+   DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+   DIRECTORY   include
+   DESTINATION include/${PROJECT_NAME}
+)
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_LIB_NAME})
+ament_package()

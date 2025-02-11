@@ -1,39 +1,39 @@
-# # Find includes in corresponding build directories
-if(NOT DEFINED CMAKE_PREFIX_PATH)
-   if(NOT "$ENV{CMAKE_PREFIX_PATH}" STREQUAL "")
-      if(NOT WIN32)
-         STRING(REPLACE ":" ";" CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
-      else()
-         set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
-      endif()
-   endif()
-endif()
-
-if(NOT "/usr/local" IN_LIST CMAKE_INSTALL_PREFIX)
-   LIST(APPEND CMAKE_INSTALL_PREFIX "/usr/local")
-endif()
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_INSTALL_PREFIX}/lib/cmake/)
-
-message(STATUS "Using CMAKE_PREFIX_PATH - ${CMAKE_PREFIX_PATH}")
-
 # ########################
 # # Configuring catkin  ##
 # ########################
-find_package(catkin REQUIRED
-   COMPONENTS roscpp control_toolbox std_msgs geometry_msgs nav_msgs cascade_pid_controller_msgs 
-   tf2 tf2_ros tf2_geometry_msgs tf_conversions catec_control_manager_msgs tf2_eigen)
+find_package(rclcpp REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(mavros_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(cascade_pid_controller_msgs REQUIRED)
+find_package(catec_control_manager_msgs REQUIRED)
+find_package(control_toolbox REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
-catkin_package(
-   INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-   LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp control_toolbox std_msgs geometry_msgs nav_msgs cascade_pid_controller_msgs
-   tf2 tf2_ros tf2_geometry_msgs tf_conversions catec_control_manager_msgs tf2_eigen
+set(ROS2_DEPENDENCIES
+  rclcpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
+  mavros_msgs
+  cascade_pid_controller_msgs
+  catec_control_manager_msgs
+  control_toolbox
+  tf2
+  tf2_ros
+  tf2_eigen
+  tf2_geometry_msgs
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
+ament_target_dependencies(${PROJECT_LIB_NAME} ${ROS2_DEPENDENCIES})
 
-# To ensure that the messages are built before the node
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+########################
+## Configuring Eigen  ##
+########################
+find_package(Eigen3 REQUIRED)
+target_link_libraries(${PROJECT_LIB_NAME} Eigen3::Eigen)

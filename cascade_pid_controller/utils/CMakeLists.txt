@@ -13,4 +13,4 @@
 ##---------------------------------------------------------------------------------------------------------------------
 
 add_executable(cascade_pid_controller_node cascade_pid_controller_main.cpp)
-target_link_libraries(cascade_pid_controller_node PRIVATE ${PROJECT_NAME})
+target_link_libraries(cascade_pid_controller_node PRIVATE ${PROJECT_LIB_NAME})

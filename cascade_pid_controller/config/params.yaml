@@ -1,68 +1,86 @@
-loop_freq: 30.0 # Hz
+cascade_pid_controller_node:
+  ros__parameters:
+    # Topics
+    odometry_topic: "/mavros/local_position/odom"
+    pose_reference_topic: "/pose_reference_topic"
+    twist_reference_topic: "/twist_reference_topic"
+    trajectory_reference_topic: "/trajectory_reference_topic"
+    cmd_topic: "/mavros/setpoint_raw/attitude"
+    state_topic: "/catec_control_manager/state"
 
-pos:
-  x:
-    p: 1.0
-    i: 0.01
-    d: 0.0
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: false
-    publish_state: true
+    loop_freq: 30.0 # Hz
+    pos:
+      x:
+        p: 1.0
+        i: 0.01
+        d: 0.0
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: false
+        publish_state: true
 
-  y:
-    p: 1.0
-    i: 0.01
-    d: 0.0
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: false
-    publish_state: true
+      y:
+        p: 1.0
+        i: 0.01
+        d: 0.0
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: false
+        publish_state: true
 
-  z:
-    p: 0.5
-    i: 0.0
-    d: 0.0
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: true
-    publish_state: true
+      z:
+        p: 0.5
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: true
+        publish_state: true
 
-vel:
-  x:
-    p: 1.8
-    i: 0.4
-    d: 0.2
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: true
-    publish_state: true
+    vel:
+      x:
+        p: 1.8
+        i: 0.4
+        d: 0.2
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: true
+        publish_state: true
 
-  y:
-    p: 1.8
-    i: 0.4
-    d: 0.2
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: true
-    publish_state: true
+      y:
+        p: 1.8
+        i: 0.4
+        d: 0.2
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: true
+        publish_state: true
 
-  z:
-    p: 0.5
-    i: 0.0
-    d: 0.2
-    i_clamp_min: -0.5
-    i_clamp_max: 0.5
-    antiwindup: true
-    publish_state: true
-  
-  filt_d_freq: 5.0  # Hz
+      z:
+        p: 0.5
+        i: 0.0
+        d: 0.2
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: true
+        publish_state: true
+    
+    yaw:
+        p: 0.5
+        i: 0.0
+        d: 0.0
+        i_clamp_min: -0.5
+        i_clamp_max: 0.5
+        antiwindup: true
+        publish_state: true
 
-max_vel_xy:   0.5  # m/s
-max_vel_z:    0.5  # m/s
-max_yaw_rate: 30.0 # deg/s
-max_roll:     35.0 # deg
-max_pitch:    35.0 # deg
+    filt_d_freq: 5.0  # Hz
 
-WPNAV_SPEED_DN: 1.5 # m/s
-WPNAV_SPEED_UP: 2.5 # m/s
+    max_vel_xy:   0.5  # m/s
+    max_vel_z:    0.5  # m/s
+    max_yaw_rate: 30.0 # deg/s
+    max_roll:     35.0 # deg
+    max_pitch:    35.0 # deg
+
+    WPNAV_SPEED_DN: 1.5 # m/s
+    WPNAV_SPEED_UP: 2.5 # m/s
