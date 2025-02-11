@@ -1,6 +1,11 @@
 # LUCAS: Lightweight framework for UAV Control And Supervision
 
-TBC
+Framework for UAV autonomous flight compatible with ArduPilot. The two modules that composed it are:
+
+- **CATEC Control Manager:** Finite-state-machine for mission and behavior control.
+- **Cascade PID Controller:** Module for trajectory control that interfaces with CATEC Control Manager and sent attitude set-points to autopilot via MAVROS.
+
+Please check the README of each package for usage guidelines and more detailed information.
 
 ## Citation
 
