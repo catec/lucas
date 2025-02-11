@@ -41,7 +41,7 @@ Trajectory control: It behaves like position control but using the derivatives o
 > Use this topic to activate trajectory controller (feedforward). 
 
 - state_topic ([catec_control_manager_msgs/State](https://github.com/catec/lucas/blob/ros2/catec_control_manager_msgs/msg/State.msg))
-> Receives state information from UAL node by this topic.
+> Receives state information from CATEC control manager node by this topic.
 
 ### Published topics
 

@@ -1,6 +1,6 @@
 # CATEC CONTROL MANAGER (ROS2)
 
-This package is the core component within the CATEC's autonomy stack in GNSS-Denied environments. Its function is to handle the state of the aircraft and to manage the necessary control references according to the desired flight status. For more in-depth and extensive information on the states and the transitions between them, visit [this Confluence page](https://catec.atlassian.net/wiki/spaces/BEEYONDERS1/pages/294715393/Control+Manager).
+This package is the core component within the CATEC's autonomy stack in GNSS-Denied environments. Its function is to handle the state of the aircraft and to manage the necessary control references according to the desired flight status.
 
 ![AltText](./docs/control_manager_diagram.png)
 
