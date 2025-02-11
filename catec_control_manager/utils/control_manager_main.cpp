@@ -33,8 +33,6 @@ const std::string currentDateTime()
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "control_manager_node");
-
     const std::string log_file_name{
             "/home/" + std::string(std::getenv("USER")) + "/.catec/logger/control_manager/" + currentDateTime()
             + ".log"};
@@ -44,11 +42,15 @@ int main(int argc, char** argv)
     const std::size_t n_log_files{50};
     LogManager::instance().initialize(log_file_name, console_level, file_level, n_log_files);
 
-    auto control_manager = std::make_unique<catec::ControlManagerNode>();
+    /// \note: ROS2 stuff
+    rclcpp::init(argc, argv);
+    rclcpp::NodeOptions options;
+    auto                control_manager_node = std::make_shared<catec::ControlManagerNode>(options);
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(control_manager_node);
+    executor.spin();
 
-    ros::AsyncSpinner spinner(4); // Use 4 threads
-    spinner.start();
-    ros::waitForShutdown();
-
+    rclcpp::shutdown();
     LogManager::instance().shutdown();
+    return 0;
 }

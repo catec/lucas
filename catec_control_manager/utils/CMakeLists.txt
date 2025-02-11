@@ -13,4 +13,4 @@
 ##---------------------------------------------------------------------------------------------------------------------
 
 add_executable(control_manager_node control_manager_main.cpp)
-target_link_libraries(control_manager_node PRIVATE ${PROJECT_NAME})
+target_link_libraries(control_manager_node PRIVATE ${PROJECT_LIB_NAME})

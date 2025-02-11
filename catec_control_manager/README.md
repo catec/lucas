@@ -1,4 +1,4 @@
-# CATEC Control Manager
+# CATEC CONTROL MANAGER (ROS2)
 
 <div>
   <a href="https://bitbucket.org/fadacatec-ondemand/catec_control_manager/src/main"><img src="https://img.shields.io/badge/ROS1-Noetic-blue" /></a>
@@ -29,7 +29,7 @@ sudo apt install libyaml-cpp-dev
 sudo apt-get install ros-$ROS_DISTRO-mavros-msgs
 ```
 
-* [CATEC Control Manager Msgs](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs)
+* [CATEC Control Manager Msgs (ros2)](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs)
 
 Clone it along this repo.
 
@@ -102,8 +102,10 @@ Normally the parameters dont need to be changed. Although there may be certain s
 
 ## Usage
 
+---
+
 ```
-roslaunch catec_control_manager catec_control_manager.launch
+ros2 launch catec_control_manager run.launch.py
 ```
 
 ## Help / Troubleshooting

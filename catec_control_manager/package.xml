@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
 
   <name>catec_control_manager</name>
   <version>1.1.0</version>
@@ -7,20 +7,31 @@
 
   <maintainer email="mmontes@catec.aero">Marco A. Montes Grova</maintainer>
   <maintainer email="jimurillo@catec.aero">Jose Ignacio Murillo</maintainer>
+  <maintainer email="jmgonzalez@catec.aero">Jose Manuel Gonzalez Marin</maintainer>
 
   <license>GPLv3</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
+  <depend>mavros_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>spdlog</depend>
+  <depend>eigen3</depend>
+  <depend>catec_control_manager_msgs</depend>
+  <depend>cascade_pid_controller_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_sensor_msgs</depend>
 
-  <build_depend>mavros_msgs</build_depend>
-  <exec_depend>mavros_msgs</exec_depend>
-
-  <build_depend>catec_control_manager_msgs</build_depend>
-  <exec_depend>catec_control_manager_msgs</exec_depend>
-
-  <build_depend>cascade_pid_controller_msgs</build_depend>
-  <exec_depend>cascade_pid_controller_msgs</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

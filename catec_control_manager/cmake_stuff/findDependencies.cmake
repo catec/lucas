@@ -12,54 +12,55 @@
 ## https://www.gnu.org/licenses/.
 ##---------------------------------------------------------------------------------------------------------------------
 
-# Find includes in corresponding build directories
-if(NOT DEFINED CMAKE_PREFIX_PATH)
-   if(NOT "$ENV{CMAKE_PREFIX_PATH}" STREQUAL "")
-      set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
-   endif()
-endif()
-
-if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
-   set(CMAKE_INSTALL_PREFIX "/usr/local")
-endif()
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_INSTALL_PREFIX}/lib/cmake/)
-
-message(STATUS "Using CMAKE_PREFIX_PATH - ${CMAKE_PREFIX_PATH}")
-
 # ########################
 # # Configuring catkin  ##
 # ########################
-find_package(catkin REQUIRED
-   COMPONENTS roscpp mavros_msgs catec_control_manager_msgs cascade_pid_controller_msgs)
+find_package(rclcpp REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(mavros_msgs REQUIRED)
+find_package(catec_control_manager_msgs REQUIRED)
+find_package(cascade_pid_controller_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_ros REQUIRED)
 
-catkin_package(
-   INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-   LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp mavros_msgs catec_control_manager_msgs cascade_pid_controller_msgs
+set(ROS2_DEPENDENCIES
+  rclcpp
+  tf2_ros
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_sensor_msgs
+  tf2
+  std_msgs
+  nav_msgs
+  std_srvs
+  geometry_msgs
+  mavros_msgs
+  catec_control_manager_msgs
+  cascade_pid_controller_msgs
 )
-
-target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
-
-# To ensure that the messages are built before the node
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+ament_target_dependencies(${PROJECT_LIB_NAME} ${ROS2_DEPENDENCIES})
 
 ########################
 ## Configuring spdlog ##
 ########################
 find_package(spdlog REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC spdlog::spdlog)
+target_link_libraries(${PROJECT_LIB_NAME} spdlog::spdlog)
 
 ##########################
 ## Configuring yaml-cpp ##
 ##########################
 find_package(yaml-cpp REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC yaml-cpp)
+target_link_libraries(${PROJECT_LIB_NAME} yaml-cpp)
 
 ########################
 ## Configuring Eigen  ##
 ########################
 find_package(Eigen3 REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen)
+target_link_libraries(${PROJECT_LIB_NAME} Eigen3::Eigen)

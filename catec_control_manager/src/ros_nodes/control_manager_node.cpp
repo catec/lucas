@@ -14,17 +14,12 @@
 
 #include "catec_control_manager/ros_nodes/control_manager_node.h"
 
-#include <catec_control_manager_msgs/State.h>
-#include <mavros_msgs/SetMode.h>
-
-#include "cascade_pid_controller_msgs/TrajCommand.h"
-#include "catec_control_manager/common/log_manager.h"
 #include "catec_control_manager/control_manager_state_machine.h"
 #include "catec_control_manager/ros_nodes/ros_parsers.h"
 
 namespace catec {
-ControlManagerNode::ControlManagerNode() :
-        _nh(ros::NodeHandle("~")),
+ControlManagerNode::ControlManagerNode(const rclcpp::NodeOptions& options) :
+        Node("control_manager_node", options),
         _control_manager_sm(std::make_unique<ControlManagerStateMachine>())
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
@@ -32,8 +27,7 @@ ControlManagerNode::ControlManagerNode() :
     configureTopics();
     configureServices();
 
-    std::string parameters_file_path;
-    _nh.param<std::string>("parameters_file_path", parameters_file_path, "parameters_file_path");
+    std::string parameters_file_path = this->declare_parameter<std::string>("parameters_file_path", "");
     _control_manager_sm->loadParametersFile(parameters_file_path);
 
     _control_manager_sm->sendCommandToRosCb = std::bind(
@@ -58,95 +52,120 @@ void ControlManagerNode::configureTopics()
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
-    std::string odometry_topic, imu_topic, pwm_out_topic, mavros_rangefinder_topic, mavros_rc_in_topic,
-            mavros_extended_state_topic, mavros_state_topic, controller_state_topic, twist_assisted_reference_topic,
-            offboard_reference_topic, current_state_topic, controller_pose_reference_topic,
-            controller_twist_reference_topic, controller_trajectory_reference_topic, set_mavros_mode_topic;
-    float state_pub_rate;
-    _nh.param<std::string>("odometry_topic", odometry_topic, "odometry");
-    _nh.param<std::string>("imu_topic", imu_topic, "imu");
-    _nh.param<std::string>("pwm_out_topic", pwm_out_topic, "pwm_out_topic");
-    _nh.param<std::string>("mavros_rangefinder_topic", mavros_rangefinder_topic, "pwm_out_topic");
-    _nh.param<std::string>("mavros_extended_state_topic", mavros_extended_state_topic, "/mavros/extended_state");
-    _nh.param<std::string>("mavros_state_topic", mavros_state_topic, "/mavros/state");
-    _nh.param<std::string>("controller_state_topic", controller_state_topic, "/cascade_pid_controller/control_mode");
-    _nh.param<std::string>("offboard_reference_topic", offboard_reference_topic, "offboard_reference_topic");
-    _nh.param<std::string>(
-            "twist_assisted_reference_topic", twist_assisted_reference_topic, "/twist_assisted_reference_topic");
+    auto odometry_topic = this->declare_parameter<std::string>("odometry_topic", "odometry");
+    auto imu_topic      = this->declare_parameter<std::string>("imu_topic", "imu");
+    auto pwm_out_topic  = this->declare_parameter<std::string>("pwm_out_topic", "pwm_out_topic");
+    auto mavros_rangefinder_topic
+            = this->declare_parameter<std::string>("mavros_rangefinder_topic", "mavros_rangefinder_topic");
+    auto mavros_extended_state_topic
+            = this->declare_parameter<std::string>("mavros_extended_state_topic", "/mavros/extended_state");
+    auto mavros_state_topic = this->declare_parameter<std::string>("mavros_state_topic", "/mavros/state");
+    auto controller_state_topic
+            = this->declare_parameter<std::string>("controller_state_topic", "/cascade_pid_controller/control_mode");
+    auto offboard_reference_topic
+            = this->declare_parameter<std::string>("offboard_reference_topic", "/offboard_reference_topic");
+    auto twist_assisted_reference_topic
+            = this->declare_parameter<std::string>("twist_assisted_reference_topic", "/twist_assisted_reference_topic");
+    auto current_state_topic             = this->declare_parameter<std::string>("current_state_topic", "state");
+    auto controller_pose_reference_topic = this->declare_parameter<std::string>(
+            "controller_pose_reference_topic", "/controller_pose_reference_topic");
+    auto controller_twist_reference_topic = this->declare_parameter<std::string>(
+            "controller_twist_reference_topic", "/controller_twist_reference_topic");
+    auto controller_trajectory_reference_topic = this->declare_parameter<std::string>(
+            "controller_trajectory_reference_topic", "/controller_trajectory_reference_topic");
+    auto state_pub_rate = this->declare_parameter<double>("state_pub_rate", 30.0);
 
-    _nh.param<std::string>("current_state_topic", current_state_topic, "state");
-    _nh.param<std::string>("controller_pose_reference_topic", controller_pose_reference_topic, "pose_reference_topic");
-    _nh.param<std::string>(
-            "controller_twist_reference_topic", controller_twist_reference_topic, "pose_reference_topic");
-    _nh.param<std::string>(
-            "controller_trajectory_reference_topic", controller_trajectory_reference_topic, "pose_reference_topic");
-    _nh.param<float>("state_pub_rate", state_pub_rate, 30);
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-    // clang-format off
-    _odometry_sub = _nh.subscribe<nav_msgs::Odometry>(odometry_topic, 1, &ControlManagerNode::odometryCb, 
-                                                      this, ros::TransportHints().tcpNoDelay());
-    _imu_sub = _nh.subscribe<sensor_msgs::Imu>(imu_topic, 1, &ControlManagerNode::imuCb, 
-                                                      this, ros::TransportHints().tcpNoDelay());
-    _pwm_out_sub = _nh.subscribe<mavros_msgs::RCOut>(pwm_out_topic, 1, &ControlManagerNode::pwmOutCb, 
-                                                      this, ros::TransportHints().tcpNoDelay());
-    _mavros_rangefinder_sub = _nh.subscribe<sensor_msgs::Range>(mavros_rangefinder_topic, 1, &ControlManagerNode::mavrosRangefinderCb, 
-                                                      this, ros::TransportHints().tcpNoDelay());
+    _odometry_sub = this->create_subscription<nav_msgs::msg::Odometry>(
+            odometry_topic, qos, std::bind(&ControlManagerNode::odometryCb, this, std::placeholders::_1));
 
-    _mavros_cur_state_sub = 
-        _nh.subscribe<mavros_msgs::State>(mavros_state_topic, 1, &ControlManagerNode::mavrosStateCb,
-                                          this, ros::TransportHints().tcpNoDelay());
-    _mavros_cur_extended_state_sub = 
-        _nh.subscribe<mavros_msgs::ExtendedState>(mavros_extended_state_topic, 1, &ControlManagerNode::mavrosExtendedStateCb,
-                                          this, ros::TransportHints().tcpNoDelay());
+    _imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
+            imu_topic, rclcpp::SensorDataQoS(), std::bind(&ControlManagerNode::imuCb, this, std::placeholders::_1));
 
-    _controller_state_sub = 
-        _nh.subscribe<cascade_pid_controller_msgs::State>(controller_state_topic, 1, &ControlManagerNode::controllerStateCb,
-                                          this, ros::TransportHints().tcpNoDelay());
+    _pwm_out_sub = this->create_subscription<mavros_msgs::msg::RCOut>(
+            pwm_out_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(&ControlManagerNode::pwmOutCb, this, std::placeholders::_1));
 
-    _twist_reference_sub = 
-        _nh.subscribe<geometry_msgs::Twist>(twist_assisted_reference_topic, 1, &ControlManagerNode::twistReferenceCb,
-                                         this, ros::TransportHints().tcpNoDelay());
+    _mavros_rangefinder_sub = this->create_subscription<sensor_msgs::msg::Range>(
+            mavros_rangefinder_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(&ControlManagerNode::mavrosRangefinderCb, this, std::placeholders::_1));
 
-    _offboard_reference_sub = 
-        _nh.subscribe<cascade_pid_controller_msgs::TrajCommand>(offboard_reference_topic, 1, &ControlManagerNode::offboardReferenceCb,
-                                         this, ros::TransportHints().tcpNoDelay());
-    // clang-format on
+    _mavros_cur_state_sub = this->create_subscription<mavros_msgs::msg::State>(
+            mavros_state_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(&ControlManagerNode::mavrosStateCb, this, std::placeholders::_1));
 
-    _state_pub_timer = _nh.createTimer(
-            ros::Duration(1.0 / state_pub_rate), std::bind(&ControlManagerNode::publishCurrentState, this));
-    _current_state_pub              = _nh.advertise<catec_control_manager_msgs::State>(current_state_topic, 1);
-    _controller_pose_reference_pub  = _nh.advertise<geometry_msgs::PoseStamped>(controller_pose_reference_topic, 1);
-    _controller_twist_reference_pub = _nh.advertise<geometry_msgs::TwistStamped>(controller_twist_reference_topic, 1);
-    _controller_trajectory_reference_pub
-            = _nh.advertise<cascade_pid_controller_msgs::TrajCommand>(controller_trajectory_reference_topic, 1);
+    _mavros_cur_extended_state_sub = this->create_subscription<mavros_msgs::msg::ExtendedState>(
+            mavros_extended_state_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(&ControlManagerNode::mavrosExtendedStateCb, this, std::placeholders::_1));
+
+    _controller_state_sub = this->create_subscription<cascade_pid_controller_msgs::msg::State>(
+            controller_state_topic,
+            qos,
+            std::bind(&ControlManagerNode::controllerStateCb, this, std::placeholders::_1));
+
+    _twist_reference_sub = this->create_subscription<geometry_msgs::msg::Twist>(
+            twist_assisted_reference_topic,
+            qos,
+            std::bind(&ControlManagerNode::twistReferenceCb, this, std::placeholders::_1));
+
+    _offboard_reference_sub = this->create_subscription<cascade_pid_controller_msgs::msg::TrajCommand>(
+            offboard_reference_topic,
+            qos,
+            std::bind(&ControlManagerNode::offboardReferenceCb, this, std::placeholders::_1));
+
+    _state_pub_timer = this->create_wall_timer(
+            std::chrono::duration<double>(1. / state_pub_rate),
+            std::bind(&ControlManagerNode::publishCurrentState, this));
+
+    _current_state_pub = this->create_publisher<catec_control_manager_msgs::msg::State>(current_state_topic, qos);
+    _controller_pose_reference_pub
+            = this->create_publisher<geometry_msgs::msg::PoseStamped>(controller_pose_reference_topic, qos);
+    _controller_twist_reference_pub
+            = this->create_publisher<geometry_msgs::msg::TwistStamped>(controller_twist_reference_topic, qos);
+    _controller_trajectory_reference_pub = this->create_publisher<cascade_pid_controller_msgs::msg::TrajCommand>(
+            controller_trajectory_reference_topic, qos);
 }
 
 void ControlManagerNode::configureServices()
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
-    std::string mavros_set_move_srv, takeoff_srv, land_srv, get_authority_srv, set_mode_assisted_srv,
-            set_mode_offboard_srv, set_mode_hover_srv, go_to_waypoint_srv;
-    _nh.param<std::string>("mavros_set_move_srv", mavros_set_move_srv, "set_mode");
-    _nh.param<std::string>("get_authority_srv", get_authority_srv, "get_authority");
-    _nh.param<std::string>("takeoff_srv", takeoff_srv, "take_off");
-    _nh.param<std::string>("land_srv", land_srv, "land");
-    _nh.param<std::string>("set_mode_hover_srv", set_mode_hover_srv, "set_mode_hover");
-    _nh.param<std::string>("set_mode_assisted_srv", set_mode_assisted_srv, "set_mode_assisted");
-    _nh.param<std::string>("set_mode_offboard_srv", set_mode_offboard_srv, "set_mode_offboard");
-    _nh.param<std::string>("go_to_waypoint_srv", go_to_waypoint_srv, "set_mode_offboard");
+    auto mavros_set_move_srv   = this->declare_parameter<std::string>("mavros_set_move_srv", "set_mode");
+    auto get_authority_srv     = this->declare_parameter<std::string>("get_authority_srv", "get_authority");
+    auto takeoff_srv           = this->declare_parameter<std::string>("takeoff_srv", "take_off");
+    auto land_srv              = this->declare_parameter<std::string>("land_srv", "land");
+    auto go_to_waypoint_srv    = this->declare_parameter<std::string>("go_to_waypoint_srv", "gotowp");
+    auto set_mode_hover_srv    = this->declare_parameter<std::string>("set_mode_hover_srv", "set_mode_hover");
+    auto set_mode_assisted_srv = this->declare_parameter<std::string>("set_mode_assisted_srv", "set_mode_assisted");
+    auto set_mode_offboard_srv = this->declare_parameter<std::string>("set_mode_offboard_srv", "set_mode_offboard");
 
-    _set_flight_mode_client = _nh.serviceClient<mavros_msgs::SetMode>(mavros_set_move_srv);
+    _set_flight_mode_client = this->create_client<mavros_msgs::srv::SetMode>(mavros_set_move_srv);
 
-    _get_authority_server  = _nh.advertiseService(get_authority_srv, &ControlManagerNode::getAuthorityServer, this);
-    _takeoff_server        = _nh.advertiseService(takeoff_srv, &ControlManagerNode::takeOffServer, this);
-    _land_server           = _nh.advertiseService(land_srv, &ControlManagerNode::landServer, this);
-    _set_mode_hover_server = _nh.advertiseService(set_mode_hover_srv, &ControlManagerNode::setModeHoverServer, this);
-    _set_mode_assisted_server
-            = _nh.advertiseService(set_mode_assisted_srv, &ControlManagerNode::setModeAssistedServer, this);
-    _set_mode_offboard_server
-            = _nh.advertiseService(set_mode_offboard_srv, &ControlManagerNode::setModeOffboardServer, this);
-    _go_to_waypoint_server = _nh.advertiseService(go_to_waypoint_srv, &ControlManagerNode::goToWaypointServer, this);
+    _get_authority_server = this->create_service<std_srvs::srv::Trigger>(
+            get_authority_srv,
+            std::bind(&ControlManagerNode::getAuthorityServer, this, std::placeholders::_1, std::placeholders::_2));
+    _takeoff_server = this->create_service<catec_control_manager_msgs::srv::TakeOff>(
+            takeoff_srv,
+            std::bind(&ControlManagerNode::takeOffServer, this, std::placeholders::_1, std::placeholders::_2));
+    _land_server = this->create_service<std_srvs::srv::Trigger>(
+            land_srv, std::bind(&ControlManagerNode::landServer, this, std::placeholders::_1, std::placeholders::_2));
+    _go_to_waypoint_server = this->create_service<catec_control_manager_msgs::srv::GoToWaypoint>(
+            go_to_waypoint_srv,
+            std::bind(&ControlManagerNode::goToWaypointServer, this, std::placeholders::_1, std::placeholders::_2));
+    _set_mode_hover_server = this->create_service<std_srvs::srv::Trigger>(
+            set_mode_hover_srv,
+            std::bind(&ControlManagerNode::setModeHoverServer, this, std::placeholders::_1, std::placeholders::_2));
+    _set_mode_assisted_server = this->create_service<std_srvs::srv::Trigger>(
+            set_mode_assisted_srv,
+            std::bind(&ControlManagerNode::setModeAssistedServer, this, std::placeholders::_1, std::placeholders::_2));
+    _set_mode_offboard_server = this->create_service<std_srvs::srv::Trigger>(
+            set_mode_offboard_srv,
+            std::bind(&ControlManagerNode::setModeOffboardServer, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void ControlManagerNode::publishCurrentState()
@@ -155,13 +174,13 @@ void ControlManagerNode::publishCurrentState()
 
     const auto current_state = _control_manager_sm->getCurrentState();
 
-    catec_control_manager_msgs::State current_state_msg;
+    catec_control_manager_msgs::msg::State current_state_msg;
     current_state_msg.state = static_cast<uint8_t>(current_state);
     current_state_msg.name  = ToString(current_state);
-    _current_state_pub.publish(current_state_msg);
+    _current_state_pub->publish(current_state_msg);
 }
 
-void ControlManagerNode::mavrosStateCb(const mavros_msgs::State::ConstPtr& msg)
+void ControlManagerNode::mavrosStateCb(const mavros_msgs::msg::State::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -182,7 +201,7 @@ void ControlManagerNode::mavrosStateCb(const mavros_msgs::State::ConstPtr& msg)
     _control_manager_sm->updateMavrosState(received_state);
 }
 
-void ControlManagerNode::mavrosExtendedStateCb(const mavros_msgs::ExtendedState::ConstPtr& msg)
+void ControlManagerNode::mavrosExtendedStateCb(const mavros_msgs::msg::ExtendedState::SharedPtr msg)
 {
     // LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -191,7 +210,7 @@ void ControlManagerNode::mavrosExtendedStateCb(const mavros_msgs::ExtendedState:
     _control_manager_sm->updateMavrosExtendedState(received_extended_state);
 }
 
-void ControlManagerNode::controllerStateCb(const cascade_pid_controller_msgs::State::ConstPtr& msg)
+void ControlManagerNode::controllerStateCb(const cascade_pid_controller_msgs::msg::State::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -200,7 +219,7 @@ void ControlManagerNode::controllerStateCb(const cascade_pid_controller_msgs::St
     _control_manager_sm->updateControllerState(controller_state);
 }
 
-void ControlManagerNode::odometryCb(const nav_msgs::Odometry::ConstPtr& msg)
+void ControlManagerNode::odometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -212,7 +231,7 @@ void ControlManagerNode::odometryCb(const nav_msgs::Odometry::ConstPtr& msg)
     _control_manager_sm->updateOdometry(odom_msg);
 }
 
-void ControlManagerNode::imuCb(const sensor_msgs::Imu::ConstPtr& msg)
+void ControlManagerNode::imuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -224,7 +243,7 @@ void ControlManagerNode::imuCb(const sensor_msgs::Imu::ConstPtr& msg)
     _control_manager_sm->updateImu(imu_msg);
 }
 
-void ControlManagerNode::pwmOutCb(const mavros_msgs::RCOut::ConstPtr& msg)
+void ControlManagerNode::pwmOutCb(const mavros_msgs::msg::RCOut::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -236,7 +255,7 @@ void ControlManagerNode::pwmOutCb(const mavros_msgs::RCOut::ConstPtr& msg)
     _control_manager_sm->updatePwm(pwm_msg);
 }
 
-void ControlManagerNode::mavrosRangefinderCb(const sensor_msgs::Range::ConstPtr& msg)
+void ControlManagerNode::mavrosRangefinderCb(const sensor_msgs::msg::Range::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -248,7 +267,7 @@ void ControlManagerNode::mavrosRangefinderCb(const sensor_msgs::Range::ConstPtr&
     _control_manager_sm->resetRangefinderChecker();
 }
 
-void ControlManagerNode::twistReferenceCb(const geometry_msgs::Twist::ConstPtr& msg)
+void ControlManagerNode::twistReferenceCb(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -273,7 +292,7 @@ void ControlManagerNode::twistReferenceCb(const geometry_msgs::Twist::ConstPtr& 
     }
 }
 
-void ControlManagerNode::offboardReferenceCb(const cascade_pid_controller_msgs::TrajCommand::ConstPtr& msg)
+void ControlManagerNode::offboardReferenceCb(const cascade_pid_controller_msgs::msg::TrajCommand::SharedPtr msg)
 
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
@@ -301,7 +320,9 @@ void ControlManagerNode::offboardReferenceCb(const cascade_pid_controller_msgs::
     }
 }
 
-bool ControlManagerNode::getAuthorityServer(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
+bool ControlManagerNode::getAuthorityServer(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
@@ -311,8 +332,8 @@ bool ControlManagerNode::getAuthorityServer(std_srvs::Trigger::Request&, std_srv
 
     // HOVER
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
 
     // if dispatch to hover, call mavros set mode GUIDED NO GPS ¿CHECK REFERENCES?
 
@@ -322,74 +343,82 @@ bool ControlManagerNode::getAuthorityServer(std_srvs::Trigger::Request&, std_srv
 }
 
 bool ControlManagerNode::takeOffServer(
-        catec_control_manager_msgs::TakeOff::Request&  req,
-        catec_control_manager_msgs::TakeOff::Response& res)
+        const std::shared_ptr<catec_control_manager_msgs::srv::TakeOff::Request> req,
+        std::shared_ptr<catec_control_manager_msgs::srv::TakeOff::Response>      res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
-    auto response = _control_manager_sm->requestTakeOff(req.height);
+    auto response = _control_manager_sm->requestTakeOff(req->height);
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
-bool ControlManagerNode::landServer(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
+bool ControlManagerNode::landServer(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
     auto response = _control_manager_sm->requestLand();
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
-bool ControlManagerNode::setModeHoverServer(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
+bool ControlManagerNode::setModeHoverServer(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
     auto response = _control_manager_sm->requestChangeToHover();
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
-bool ControlManagerNode::setModeAssistedServer(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
+bool ControlManagerNode::setModeAssistedServer(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
     auto response = _control_manager_sm->requestChangeToAssisted();
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
-bool ControlManagerNode::setModeOffboardServer(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
+bool ControlManagerNode::setModeOffboardServer(
+        const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
     auto response = _control_manager_sm->requestChangeToOffboard();
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
 bool ControlManagerNode::goToWaypointServer(
-        catec_control_manager_msgs::GoToWaypoint::Request&  req,
-        catec_control_manager_msgs::GoToWaypoint::Response& res)
+        const std::shared_ptr<catec_control_manager_msgs::srv::GoToWaypoint::Request> req,
+        std::shared_ptr<catec_control_manager_msgs::srv::GoToWaypoint::Response>      res)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
-    const auto frame_id = req.waypoint.header.frame_id;
+    const auto frame_id = req->waypoint.header.frame_id;
 
-    auto response = _control_manager_sm->requestGoToWaypoint(frame_id, convertFromRosMsg(req.waypoint.pose));
+    auto response = _control_manager_sm->requestGoToWaypoint(frame_id, convertFromRosMsg(req->waypoint.pose));
 
-    res.success = response.first;
-    res.message = response.second;
+    res->success = response.first;
+    res->message = response.second;
     return true;
 }
 
@@ -397,29 +426,33 @@ void ControlManagerNode::sendRosMessage(const CommandMsg& msg)
 {
     LOG_TRACE(__PRETTY_FUNCTION__);
 
+    LOG_INFO("{} - Sending reference to ROS", __PRETTY_FUNCTION__);
+
+    auto now = this->get_clock()->now();
+
     const std::string frame_id{"odom"};
     if (msg.mask == CommandMask::POSITION) {
-        auto pose_msg            = convertToRosMsg<geometry_msgs::PoseStamped>(msg);
+        auto pose_msg            = convertToRosMsg<geometry_msgs::msg::PoseStamped>(msg, now);
         pose_msg.header.frame_id = frame_id;
         if (isSafeRosMsg(pose_msg)) {
-            _controller_pose_reference_pub.publish(pose_msg);
+            _controller_pose_reference_pub->publish(pose_msg);
         } else {
             LOG_ERROR("{} - PoseStamped msg not safe", __PRETTY_FUNCTION__);
         }
     } else if (msg.mask == CommandMask::VELOCITY) {
-        auto twist_msg            = convertToRosMsg<geometry_msgs::TwistStamped>(msg);
+        auto twist_msg            = convertToRosMsg<geometry_msgs::msg::TwistStamped>(msg, now);
         twist_msg.header.frame_id = frame_id;
         if (isSafeRosMsg(twist_msg)) {
-            _controller_twist_reference_pub.publish(twist_msg);
+            _controller_twist_reference_pub->publish(twist_msg);
         } else {
             LOG_ERROR("{} - TwistStamped msg not safe", __PRETTY_FUNCTION__);
         }
     } else if (msg.mask == CommandMask::TRAJECTORY) {
-        auto trajectory_msg            = convertToRosMsg<cascade_pid_controller_msgs::TrajCommand>(msg);
+        auto trajectory_msg            = convertToRosMsg<cascade_pid_controller_msgs::msg::TrajCommand>(msg, now);
         trajectory_msg.header.frame_id = frame_id;
         trajectory_msg.acceleration.x  = 0.0;
         if (isSafeRosMsg(trajectory_msg)) {
-            _controller_trajectory_reference_pub.publish(trajectory_msg);
+            _controller_trajectory_reference_pub->publish(trajectory_msg);
         } else {
             LOG_ERROR("{} - TrajCommand msg not safe", __PRETTY_FUNCTION__);
         }
@@ -434,7 +467,7 @@ void ControlManagerNode::callRosService(const MavrosState& mode)
 
     LOG_INFO("{} - Calling ROS service", __PRETTY_FUNCTION__);
 
-    mavros_msgs::SetMode srv;
+    auto request = std::make_shared<mavros_msgs::srv::SetMode::Request>();
 
     auto it = std::find_if(
             mavros_state_table.cbegin(), mavros_state_table.cend(), [&mode](auto&& p) { return p.second == mode; });
@@ -443,16 +476,19 @@ void ControlManagerNode::callRosService(const MavrosState& mode)
         return;
     }
 
-    srv.request.custom_mode = it->first;
+    request->custom_mode = it->first;
 
-    if (_set_flight_mode_client.call(srv)) {
-        if (srv.response.mode_sent) {
-            LOG_INFO("{} - Succesfully mode send to autopilot '{}'", __PRETTY_FUNCTION__, srv.request.custom_mode);
+    auto response = _set_flight_mode_client->async_send_request(request);
+
+    if (rclcpp::spin_until_future_complete(shared_from_this(), response) == rclcpp::FutureReturnCode::SUCCESS) {
+        LOG_INFO("{} - Succesfully called mavros set mode service '{}'", __PRETTY_FUNCTION__);
+        if (response.get()->mode_sent) {
+            LOG_INFO("{} - Succesfully mode send to autopilot '{}'", __PRETTY_FUNCTION__, request->custom_mode);
         } else {
-            LOG_ERROR("{} - Failed to send mode to autopilot '{}'", __PRETTY_FUNCTION__, srv.request.custom_mode);
+            LOG_ERROR("{} - Failed to send mode to autopilot '{}'", __PRETTY_FUNCTION__, request->custom_mode);
         }
     } else {
-        LOG_ERROR("{} - Failed to call mavros set mode service '{}'", __PRETTY_FUNCTION__, srv.request.custom_mode);
+        LOG_ERROR("{} - Failed to call mavros set mode service '{}'", __PRETTY_FUNCTION__, request->custom_mode);
     }
 }
 

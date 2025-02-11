@@ -1,0 +1,32 @@
+catec_control_manager:
+  ros__parameters:
+    # General
+    state_pub_rate: 100.0
+    
+    # Topics
+    odometry_topic:                 "/groundtruth/base_link/odom"
+    imu_topic:                      "/mavros/imu/data"
+    pwm_out_topic:                  "/mavros/rc/out"
+    mavros_rangefinder_topic:       "/mavros/rangefinder/rangefinder"
+    mavros_state_topic:             "/mavros/state"
+    mavros_extended_state_topic:    "/mavros/extended_state"
+    controller_state_topic:         "/cascade_pid_controller/control_mode"
+    mavros_rc_in_topic:             "/mavros/rc_in"
+    twist_assisted_reference_topic: "/catec_control_manager/assisted_ref"
+    offboard_reference_topic:       "/catec_control_manager/offboard_ref"
+
+    current_state_topic:                   "/catec_control_manager/state"
+
+    controller_pose_reference_topic:       "/pose_reference_topic"
+    controller_twist_reference_topic:      "/twist_reference_topic"
+    controller_trajectory_reference_topic: "/trajectory_reference_topic"
+
+    # Services
+    mavros_set_move_srv:   "/mavros/set_mode"
+    get_authority_srv:     "/catec_control_manager/get_authority"
+    takeoff_srv:           "/catec_control_manager/take_off"
+    land_srv:              "/catec_control_manager/land"
+    go_to_waypoint_srv:    "/catec_control_manager/go_to_waypoint"
+    set_mode_hover_srv:    "/catec_control_manager/set_mode_hover"
+    set_mode_assisted_srv: "/catec_control_manager/set_mode_assisted"
+    set_mode_offboard_srv: "/catec_control_manager/set_mode_offboard"

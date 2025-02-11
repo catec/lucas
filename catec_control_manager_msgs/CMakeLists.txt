@@ -16,20 +16,17 @@ cmake_minimum_required(VERSION 3.10...3.22)
 project(catec_control_manager_msgs)
 
 # ---- Configure CATKIN dependecies ----
-find_package(catkin REQUIRED 
-   COMPONENTS
-      message_generation
-      std_msgs
-      geometry_msgs
-)
+find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 # ---- Declare ROS messages, services and actions ----
-add_service_files(DIRECTORY srv)
-add_message_files(DIRECTORY msg)
-
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
-
-# ---- CATKIN specific configuration ----
-catkin_package(
-   CATKIN_DEPENDS message_runtime
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/State.msg"
+  "srv/TakeOff.srv"
+  "srv/GoToWaypoint.srv"
+  DEPENDENCIES std_msgs geometry_msgs
 )
+
+ament_package()

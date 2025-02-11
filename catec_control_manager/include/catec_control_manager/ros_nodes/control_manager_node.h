@@ -14,94 +14,116 @@
 
 #pragma once
 
-#include <catec_control_manager_msgs/GoToWaypoint.h>
-#include <catec_control_manager_msgs/TakeOff.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Twist.h>
-#include <mavros_msgs/ExtendedState.h>
-#include <mavros_msgs/RCOut.h>
-#include <mavros_msgs/State.h>
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/Range.h>
-#include <std_srvs/Trigger.h>
+#include <cascade_pid_controller_msgs/msg/state.hpp>
+#include <cascade_pid_controller_msgs/msg/traj_command.hpp>
+#include <catec_control_manager_msgs/msg/state.hpp>
+#include <catec_control_manager_msgs/srv/go_to_waypoint.hpp>
+#include <catec_control_manager_msgs/srv/take_off.hpp>
+#include <eigen3/Eigen/Eigen>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <mavros_msgs/msg/extended_state.hpp>
+#include <mavros_msgs/msg/rc_out.hpp>
+#include <mavros_msgs/msg/state.hpp>
+#include <mavros_msgs/srv/set_mode.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/range.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
-#include <Eigen/Eigen>
-
-#include "cascade_pid_controller_msgs/State.h"
-#include "cascade_pid_controller_msgs/TrajCommand.h"
 #include "catec_control_manager/common/types.h"
 
 namespace catec {
+
+rmw_qos_profile_t qos_profile{
+        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+        1,
+        RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT,
+        RMW_QOS_POLICY_DURABILITY_VOLATILE,
+        RMW_QOS_DEADLINE_DEFAULT,
+        RMW_QOS_LIFESPAN_DEFAULT,
+        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+        false};
+
 class ControlManagerStateMachine;
 
-class ControlManagerNode
+class ControlManagerNode : public rclcpp::Node
 {
   public:
-    ControlManagerNode();
+    ControlManagerNode(const rclcpp::NodeOptions& options);
     ~ControlManagerNode();
 
   private:
     void configureTopics();
     void configureServices();
 
-    void mavrosStateCb(const mavros_msgs::State::ConstPtr& msg);
-    void mavrosExtendedStateCb(const mavros_msgs::ExtendedState::ConstPtr& msg);
-    void controllerStateCb(const cascade_pid_controller_msgs::State::ConstPtr& msg);
-    void odometryCb(const nav_msgs::Odometry::ConstPtr& msg);
-    void imuCb(const sensor_msgs::Imu::ConstPtr& msg);
-    void pwmOutCb(const mavros_msgs::RCOut::ConstPtr& msg);
-    void mavrosRangefinderCb(const sensor_msgs::Range::ConstPtr& msg);
-    void offboardReferenceCb(const cascade_pid_controller_msgs::TrajCommand::ConstPtr& msg);
-    void twistReferenceCb(const geometry_msgs::Twist::ConstPtr& msg);
+    void mavrosStateCb(const mavros_msgs::msg::State::SharedPtr msg);
+    void mavrosExtendedStateCb(const mavros_msgs::msg::ExtendedState::SharedPtr msg);
+    void controllerStateCb(const cascade_pid_controller_msgs::msg::State::SharedPtr msg);
+    void odometryCb(const nav_msgs::msg::Odometry::SharedPtr msg);
+    void imuCb(const sensor_msgs::msg::Imu::SharedPtr msg);
+    void pwmOutCb(const mavros_msgs::msg::RCOut::SharedPtr msg);
+    void mavrosRangefinderCb(const sensor_msgs::msg::Range::SharedPtr msg);
+    void offboardReferenceCb(const cascade_pid_controller_msgs::msg::TrajCommand::SharedPtr msg);
+    void twistReferenceCb(const geometry_msgs::msg::Twist::SharedPtr msg);
 
     void publishCurrentState();
 
-    bool getAuthorityServer(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+    bool getAuthorityServer(
+            const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      res);
     bool takeOffServer(
-            catec_control_manager_msgs::TakeOff::Request&  req,
-            catec_control_manager_msgs::TakeOff::Response& res);
-    bool landServer(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-    bool setModeHoverServer(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-    bool setModeAssistedServer(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
-    bool setModeOffboardServer(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
+            const std::shared_ptr<catec_control_manager_msgs::srv::TakeOff::Request> req,
+            std::shared_ptr<catec_control_manager_msgs::srv::TakeOff::Response>      res);
+    bool landServer(
+            const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      res);
+    bool setModeHoverServer(
+            const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      res);
+    bool setModeAssistedServer(
+            const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      res);
+    bool setModeOffboardServer(
+            const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+            std::shared_ptr<std_srvs::srv::Trigger::Response>      res);
+
     bool goToWaypointServer(
-            catec_control_manager_msgs::GoToWaypoint::Request&  req,
-            catec_control_manager_msgs::GoToWaypoint::Response& res);
+            const std::shared_ptr<catec_control_manager_msgs::srv::GoToWaypoint::Request> req,
+            std::shared_ptr<catec_control_manager_msgs::srv::GoToWaypoint::Response>      res);
 
     void sendRosMessage(const CommandMsg& ref);
     void callRosService(const MavrosState& mode);
 
   private:
-    ros::NodeHandle _nh;
+    rclcpp::TimerBase::SharedPtr _state_pub_timer;
 
-    ros::Timer _state_pub_timer;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr                       _odometry_sub;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr                         _imu_sub;
+    rclcpp::Subscription<mavros_msgs::msg::RCOut>::SharedPtr                       _pwm_out_sub;
+    rclcpp::Subscription<sensor_msgs::msg::Range>::SharedPtr                       _mavros_rangefinder_sub;
+    rclcpp::Subscription<mavros_msgs::msg::State>::SharedPtr                       _mavros_cur_state_sub;
+    rclcpp::Subscription<mavros_msgs::msg::ExtendedState>::SharedPtr               _mavros_cur_extended_state_sub;
+    rclcpp::Subscription<cascade_pid_controller_msgs::msg::State>::SharedPtr       _controller_state_sub;
+    rclcpp::Subscription<cascade_pid_controller_msgs::msg::TrajCommand>::SharedPtr _offboard_reference_sub;
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr                     _twist_reference_sub;
 
-    ros::Subscriber _odometry_sub;
-    ros::Subscriber _imu_sub;
-    ros::Subscriber _pwm_out_sub;
-    ros::Subscriber _mavros_rangefinder_sub;
-    ros::Subscriber _mavros_cur_state_sub;
-    ros::Subscriber _mavros_cur_extended_state_sub;
-    ros::Subscriber _controller_state_sub;
-    ros::Subscriber _offboard_reference_sub;
-    ros::Subscriber _twist_reference_sub;
+    rclcpp::Publisher<catec_control_manager_msgs::msg::State>::SharedPtr        _current_state_pub;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr               _controller_pose_reference_pub;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr              _controller_twist_reference_pub;
+    rclcpp::Publisher<cascade_pid_controller_msgs::msg::TrajCommand>::SharedPtr _controller_trajectory_reference_pub;
 
-    ros::Publisher _current_state_pub;
-    ros::Publisher _controller_pose_reference_pub;
-    ros::Publisher _controller_twist_reference_pub;
-    ros::Publisher _controller_trajectory_reference_pub;
+    rclcpp::Service<catec_control_manager_msgs::srv::TakeOff>::SharedPtr      _takeoff_server;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr                        _land_server;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr                        _get_authority_server;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr                        _set_mode_hover_server;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr                        _set_mode_assisted_server;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr                        _set_mode_offboard_server;
+    rclcpp::Service<catec_control_manager_msgs::srv::GoToWaypoint>::SharedPtr _go_to_waypoint_server;
 
-    ros::ServiceServer _takeoff_server;
-    ros::ServiceServer _land_server;
-    ros::ServiceServer _get_authority_server;
-    ros::ServiceServer _set_mode_hover_server;
-    ros::ServiceServer _set_mode_assisted_server;
-    ros::ServiceServer _set_mode_offboard_server;
-    ros::ServiceServer _go_to_waypoint_server;
-
-    ros::ServiceClient _set_flight_mode_client;
+    rclcpp::Client<mavros_msgs::srv::SetMode>::SharedPtr _set_flight_mode_client;
 
     std::unique_ptr<ControlManagerStateMachine> _control_manager_sm;
 };

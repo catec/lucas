@@ -13,21 +13,24 @@
 //---------------------------------------------------------------------------------------------------------------------
 
 #pragma once
-#include <cascade_pid_controller_msgs/TrajCommand.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/RCOut.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
+
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+
+#include <cascade_pid_controller_msgs/msg/traj_command.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <mavros_msgs/msg/rc_out.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "catec_control_manager/common/types.h"
 #include "catec_control_manager/common/utils.h"
 namespace catec {
 
-OdometryMsg convertFromRosMsg(const nav_msgs::Odometry& msg)
+OdometryMsg convertFromRosMsg(const nav_msgs::msg::Odometry& msg)
 {
     OdometryMsg odometry;
     odometry.position.x() = msg.pose.pose.position.x;
@@ -50,7 +53,7 @@ OdometryMsg convertFromRosMsg(const nav_msgs::Odometry& msg)
     return odometry;
 }
 
-ImuMsg convertFromRosMsg(const sensor_msgs::Imu& msg)
+ImuMsg convertFromRosMsg(const sensor_msgs::msg::Imu& msg)
 {
     ImuMsg imu;
     imu.orientation.w() = msg.orientation.w;
@@ -69,7 +72,7 @@ ImuMsg convertFromRosMsg(const sensor_msgs::Imu& msg)
     return imu;
 }
 
-PwmMsg convertFromRosMsg(const mavros_msgs::RCOut& msg)
+PwmMsg convertFromRosMsg(const mavros_msgs::msg::RCOut& msg)
 {
     PwmMsg pwm;
 
@@ -83,11 +86,11 @@ PwmMsg convertFromRosMsg(const mavros_msgs::RCOut& msg)
     return pwm;
 }
 
-nav_msgs::Odometry convertToRosMsg(const OdometryMsg& odom_msg)
+nav_msgs::msg::Odometry convertToRosMsg(const OdometryMsg& odom_msg, const rclcpp::Time& stamp)
 {
-    nav_msgs::Odometry msg;
+    nav_msgs::msg::Odometry msg;
 
-    msg.header.stamp = ros::Time::now();
+    msg.header.stamp = stamp;
     // msg.header.frame_id = ;
     // msg.child_frame_id = ;
 
@@ -112,14 +115,14 @@ nav_msgs::Odometry convertToRosMsg(const OdometryMsg& odom_msg)
 }
 
 template <typename T>
-T convertToRosMsg(const CommandMsg& command_msg);
+T convertToRosMsg(const CommandMsg& command_msg, const rclcpp::Time& stamp);
 
 template <>
-geometry_msgs::PoseStamped convertToRosMsg(const CommandMsg& command_msg)
+geometry_msgs::msg::PoseStamped convertToRosMsg(const CommandMsg& command_msg, const rclcpp::Time& stamp)
 {
-    geometry_msgs::PoseStamped msg;
+    geometry_msgs::msg::PoseStamped msg;
 
-    msg.header.stamp = ros::Time::now();
+    msg.header.stamp = stamp;
     // msg.header.frame_id = ;
 
     msg.pose.position.x = command_msg.position.x();
@@ -135,11 +138,11 @@ geometry_msgs::PoseStamped convertToRosMsg(const CommandMsg& command_msg)
 }
 
 template <>
-geometry_msgs::TwistStamped convertToRosMsg(const CommandMsg& command_msg)
+geometry_msgs::msg::TwistStamped convertToRosMsg(const CommandMsg& command_msg, const rclcpp::Time& stamp)
 {
-    geometry_msgs::TwistStamped msg;
+    geometry_msgs::msg::TwistStamped msg;
 
-    msg.header.stamp = ros::Time::now();
+    msg.header.stamp = stamp;
     // msg.header.frame_id = ;
 
     msg.twist.linear.x = command_msg.linear_velocity.x();
@@ -154,11 +157,11 @@ geometry_msgs::TwistStamped convertToRosMsg(const CommandMsg& command_msg)
 }
 
 template <>
-cascade_pid_controller_msgs::TrajCommand convertToRosMsg(const CommandMsg& command_msg)
+cascade_pid_controller_msgs::msg::TrajCommand convertToRosMsg(const CommandMsg& command_msg, const rclcpp::Time& stamp)
 {
-    cascade_pid_controller_msgs::TrajCommand msg;
+    cascade_pid_controller_msgs::msg::TrajCommand msg;
 
-    msg.header.stamp = ros::Time::now();
+    msg.header.stamp = stamp;
     // msg.header.frame_id = ;
 
     msg.position.x = command_msg.position.x();
@@ -189,9 +192,9 @@ cascade_pid_controller_msgs::TrajCommand convertToRosMsg(const CommandMsg& comma
     return msg;
 }
 
-geometry_msgs::Pose convertToRosMsg(const PoseMsg& pose_msg)
+geometry_msgs::msg::Pose convertToRosMsg(const PoseMsg& pose_msg)
 {
-    geometry_msgs::Pose msg;
+    geometry_msgs::msg::Pose msg;
 
     // msg.header.stamp = ros::Time::now();
     // msg.header.frame_id = ;
@@ -208,7 +211,7 @@ geometry_msgs::Pose convertToRosMsg(const PoseMsg& pose_msg)
     return msg;
 }
 
-CommandMsg convertFromRosMsg(const geometry_msgs::Twist& msg)
+CommandMsg convertFromRosMsg(const geometry_msgs::msg::Twist& msg)
 {
     CommandMsg command;
     command.mask                = CommandMask::VELOCITY;
@@ -227,7 +230,7 @@ CommandMsg convertFromRosMsg(const geometry_msgs::Twist& msg)
     return command;
 }
 
-CommandMsg convertFromRosMsg(const geometry_msgs::Pose& msg)
+CommandMsg convertFromRosMsg(const geometry_msgs::msg::Pose& msg)
 {
     CommandMsg command;
     command.mask         = CommandMask::POSITION;
@@ -246,7 +249,7 @@ CommandMsg convertFromRosMsg(const geometry_msgs::Pose& msg)
     return command;
 }
 
-CommandMsg convertFromRosMsg(const cascade_pid_controller_msgs::TrajCommand& msg)
+CommandMsg convertFromRosMsg(const cascade_pid_controller_msgs::msg::TrajCommand& msg)
 {
     CommandMsg command;
 
@@ -278,7 +281,7 @@ CommandMsg convertFromRosMsg(const cascade_pid_controller_msgs::TrajCommand& msg
     return command;
 }
 
-bool isSafeRosMsg(const geometry_msgs::PoseStamped& msg)
+bool isSafeRosMsg(const geometry_msgs::msg::PoseStamped& msg)
 {
     if (!utils::isSafe(msg.pose.position.x) || !utils::isSafe(msg.pose.position.y)
         || !utils::isSafe(msg.pose.position.z)) {
@@ -295,7 +298,7 @@ bool isSafeRosMsg(const geometry_msgs::PoseStamped& msg)
     return true;
 }
 
-bool isSafeRosMsg(const geometry_msgs::TwistStamped& msg)
+bool isSafeRosMsg(const geometry_msgs::msg::TwistStamped& msg)
 {
     if (!utils::isSafe(msg.twist.linear.x) || !utils::isSafe(msg.twist.linear.y)
         || !utils::isSafe(msg.twist.linear.z)) {
@@ -312,7 +315,7 @@ bool isSafeRosMsg(const geometry_msgs::TwistStamped& msg)
     return true;
 }
 
-bool isSafeRosMsg(const cascade_pid_controller_msgs::TrajCommand& msg)
+bool isSafeRosMsg(const cascade_pid_controller_msgs::msg::TrajCommand& msg)
 {
     if (!utils::isSafe(msg.velocity.x) || !utils::isSafe(msg.velocity.y) || !utils::isSafe(msg.velocity.z)) {
         LOG_ERROR("Unsafe linear velocity in TrajCommand message.");
