@@ -1,0 +1,60 @@
+<launch>
+   <arg name="parameters_file_path" default="$(find catec_control_manager)/config/general_params.yaml"/>
+   <arg name="state_pub_rate"       default="100"/>
+
+   <arg name="odometry_topic"                 default="/groundtruth/base_link/odom"/>
+   <arg name="imu_topic"                      default="/mavros/imu/data"/>
+   <arg name="pwm_out_topic"                  default="/mavros/rc/out"/>
+   <arg name="mavros_rangefinder_topic"       default="/mavros/rangefinder/rangefinder"/>
+   <arg name="mavros_state_topic"             default="/mavros/state"/>
+   <arg name="mavros_extended_state_topic"    default="/mavros/extended_state"/>
+   <arg name="controller_state_topic"         default="/cascade_pid_controller/control_mode"/>
+   <arg name="mavros_rc_in_topic"             default="/mavros/rc_in"/>
+   <arg name="twist_assisted_reference_topic" default="/catec_control_manager/assisted_ref"/>
+   <arg name="offboard_reference_topic"       default="/catec_control_manager/offboard_ref"/>
+ 
+   <arg name="current_state_topic"            default="/catec_control_manager/state"/>
+   
+   <arg name="controller_pose_reference_topic"       default="/pose_reference_topic"/>
+   <arg name="controller_twist_reference_topic"      default="/twist_reference_topic"/>
+   <arg name="controller_trajectory_reference_topic" default="/trajectory_reference_topic"/>
+
+   <arg name="mavros_set_move_srv"   default="/mavros/set_mode"/>
+   <arg name="get_authority_srv"     default="/catec_control_manager/get_authority"/>
+   <arg name="takeoff_srv"           default="/catec_control_manager/take_off"/>
+   <arg name="land_srv"              default="/catec_control_manager/land"/>
+   <arg name="go_to_waypoint_srv"    default="/catec_control_manager/go_to_waypoint"/>
+   <arg name="set_mode_hover_srv"    default="/catec_control_manager/set_mode_hover"/>
+   <arg name="set_mode_assisted_srv" default="/catec_control_manager/set_mode_assisted"/>
+   <arg name="set_mode_offboard_srv" default="/catec_control_manager/set_mode_offboard"/>
+
+   <node pkg="catec_control_manager" type="control_manager_node" name="control_manager_node" output="screen">      
+      <param name="parameters_file_path" value="$(arg parameters_file_path)" />
+      <param name="state_pub_rate"       value="$(arg state_pub_rate)" />
+      
+      <param name="odometry_topic"                 value="$(arg odometry_topic)" />
+      <param name="imu_topic"                      value="$(arg imu_topic)" />
+      <param name="pwm_out_topic"                  value="$(arg pwm_out_topic)" />
+      <param name="mavros_rangefinder_topic"       value="$(arg mavros_rangefinder_topic)" />
+      <param name="mavros_state_topic"             value="$(arg mavros_state_topic)" />
+      <param name="mavros_extended_state_topic"    value="$(arg mavros_extended_state_topic)" />
+      <param name="controller_state_topic"         value="$(arg controller_state_topic)" />
+      <param name="current_state_topic"            value="$(arg current_state_topic)" />
+      <param name="twist_assisted_reference_topic" value="$(arg twist_assisted_reference_topic)"/>
+      <param name="offboard_reference_topic"       value="$(arg offboard_reference_topic)"/>
+
+      <param name="controller_pose_reference_topic"       value="$(arg controller_pose_reference_topic)"/>
+      <param name="controller_twist_reference_topic"      value="$(arg controller_twist_reference_topic)"/>
+      <param name="controller_trajectory_reference_topic" value="$(arg controller_trajectory_reference_topic)"/>
+
+      <param name="mavros_set_move_srv"    value="$(arg mavros_set_move_srv)" />
+      <param name="get_authority_srv"      value="$(arg get_authority_srv)" />
+      <param name="takeoff_srv"            value="$(arg takeoff_srv)" />
+      <param name="land_srv"               value="$(arg land_srv)" />
+      <param name="go_to_waypoint_srv"     value="$(arg go_to_waypoint_srv)" />
+      <param name="set_mode_hover_srv"     value="$(arg set_mode_hover_srv)" />
+      <param name="set_mode_assisted_srv"  value="$(arg set_mode_assisted_srv)" />
+      <param name="set_mode_offboard_srv"  value="$(arg set_mode_offboard_srv)" />
+   </node>
+
+</launch>

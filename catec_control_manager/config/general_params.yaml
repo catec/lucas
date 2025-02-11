@@ -1,0 +1,46 @@
+# ########################################################
+# ## Parameters used to configure CATEC Control Manager ##
+# ########################################################
+
+generic_reference_checker_timer_interval: 1000 # ms
+
+## Critical msgs timers intervals checker
+odom_checker_timer_interval: 1000 # ms
+imu_checker_timer_interval: 1000 # ms
+pwm_checker_timer_interval: 1000 # ms
+controller_checker_timer_interval: 1000 # ms
+rangefinder_checker_timer_interval: 1000 # ms
+
+## True if using rangefinder or feeding autopilot height estimator with odometry
+use_rangefinder: true
+
+## Number of times you try to change mode before you assume have failed
+check_mode_changed_max_attemps: 3
+## Miliseconds to wait between consecutive calls
+check_mode_changed_wait_ms: 200
+
+## It is assumed that we want all states to loop at the same frequency
+state_thread_job_rate: 10.0 # Hz
+
+going_to_wp_config:
+  v_max: 0.5 # m/s
+  a_max: 0.25 # m/s^2
+  yaw_dot_max: 0.2 # rad/s
+  position_error_th: 0.1 # m
+  yaw_error_th: 0.15 # rad
+
+assisted_config:
+  v_max: 1.0
+  yaw_dot_max: 0.2 # rad/s
+
+takingoff_config:
+  v_max: 0.5 # m/s
+  acc: 0.5 # m/s^2
+  deacc: 0.5 # m/s^2
+  height_min: 1.0 # m
+  height_error_th: 0.1 # m
+
+landing_config:
+  v_landing: 0.3
+  height_prelanding: 1.0
+  height_error_th_prelanding: 0.1
