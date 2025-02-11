@@ -12,8 +12,9 @@ This repository contains a PID controller. The position controller is based on a
 sudo apt install ros-${ROS_DISTRO}-control-toolbox ros-${ROS_DISTRO}-tf-conversions
 ```
 
-* [cascade_pid_controller_msgs](https://bitbucket.org/fadacatec-ondemand/cascade_pid_controller_msgs)
-* [catec_control_manager_msgs](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs) [branch: main]
+* [cascade_pid_controller_msgs](https://github.com/catec/lucas/tree/ros2/cascade_pid_controller_msgs)
+
+* [catec_control_manager_msgs](https://github.com/catec/lucas/tree/ros2/catec_control_manager_msgs)
 
 ## 2. Control modes
 
@@ -36,10 +37,10 @@ Trajectory control: It behaves like position control but using the derivatives o
 - twist_reference_topic ([geometry_msgs/TwistStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TwistStamped.html))
 > Use this topic to activate velocity controller. 
 
-- trajectory_reference_topic ([cascade_pid_controller_msgs/TrajCommand](https://bitbucket.org/fadacatec-ondemand/cascade_pid_controller_msgs/src/master/msg/TrajCommand.msg))
+- trajectory_reference_topic ([cascade_pid_controller_msgs/TrajCommand](https://github.com/catec/lucas/blob/ros2/cascade_pid_controller_msgs/msg/TrajCommand.msg))
 > Use this topic to activate trajectory controller (feedforward). 
 
-- state_topic ([catec_control_manager_msgs/State](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs/src/main/msg/State.msg))
+- state_topic ([catec_control_manager_msgs/State](https://github.com/catec/lucas/blob/ros2/catec_control_manager_msgs/msg/State.msg))
 > Receives state information from UAL node by this topic.
 
 ### Published topics

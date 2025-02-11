@@ -1,10 +1,5 @@
 # CATEC CONTROL MANAGER (ROS2)
 
-<div>
-  <a href="https://bitbucket.org/fadacatec-ondemand/catec_control_manager/src/main"><img src="https://img.shields.io/badge/ROS1-Noetic-blue" /></a>
-  <a href="https://bitbucket.org/fadacatec-ondemand/catec_control_manager/src/ros2"><img src="https://img.shields.io/badge/ROS2-Humble-blue" /></a>
-</div>
-
 This package is the core component within the CATEC's autonomy stack in GNSS-Denied environments. Its function is to handle the state of the aircraft and to manage the necessary control references according to the desired flight status. For more in-depth and extensive information on the states and the transitions between them, visit [this Confluence page](https://catec.atlassian.net/wiki/spaces/BEEYONDERS1/pages/294715393/Control+Manager).
 
 ![AltText](./docs/control_manager_diagram.png)
@@ -29,21 +24,11 @@ sudo apt install libyaml-cpp-dev
 sudo apt-get install ros-$ROS_DISTRO-mavros-msgs
 ```
 
-* [CATEC Control Manager Msgs (ros2)](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs)
+* [CATEC Control Manager Msgs (ros2)](https://github.com/catec/lucas/tree/ros2/catec_control_manager_msgs)
 
-Clone it along this repo.
 
-```
-git clone https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs
-```
+* [Cascade PID Controller Msgs (ros2)](https://github.com/catec/lucas/tree/ros2/cascade_pid_controller_msgs)
 
-* [Cascade PID Controller Msgs](https://bitbucket.org/fadacatec-ondemand/cascade_pid_controller_msgs)
-
-Clone it along this repo.
-
-```
-git clone https://bitbucket.org/fadacatec-ondemand/cascade_pid_controller_msgs
-```
 
 ## Parameters
 
@@ -70,10 +55,10 @@ Normally the parameters dont need to be changed. Although there may be certain s
 
 |name|type|description|
 |----|----|-----------|
-| /catec_control_manager/state | [catec_control_manager_msgs/State](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs/src/main/msg/State.msg) | - |
+| /catec_control_manager/state | [catec_control_manager_msgs/State](https://github.com/catec/lucas/blob/ros2/catec_control_manager_msgs/msg/State.msg) | - |
 | /pose_reference_topic | [geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html) | - |
 | /twist_reference_topic | [geometry_msgs/TwistStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/TwistStamped.html) | - |
-| /traj_reference_topic | [cascade_pid_controller_msgs/TrajCommand](https://bitbucket.org/fadacatec-ondemand/cascade_pid_controller_msgs/src/master/msg/TrajCommand.msg) | - |
+| /traj_reference_topic | [cascade_pid_controller_msgs/TrajCommand](https://github.com/catec/lucas/blob/ros2/cascade_pid_controller_msgs/msg/TrajCommand.msg) | - |
 
 ## Services
 
@@ -86,9 +71,9 @@ Normally the parameters dont need to be changed. Although there may be certain s
 |name|type|description|
 |----|----|-----------|
 | /catec_control_manager/get_authority | [std_srvs/Trigger](https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Trigger.html) | - |
-| /catec_control_manager/take_off | [catec_control_manager_msgs/TakeOff](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs/src/main/srv/TakeOff.srv) | - |
+| /catec_control_manager/take_off | [catec_control_manager_msgs/TakeOff](https://github.com/catec/lucas/blob/ros2/catec_control_manager_msgs/srv/TakeOff.srv) | - |
 | /catec_control_manager/land | [std_srvs/Trigger](https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Trigger.html) | - |
-| /catec_control_manager/go_to_waypoint | [catec_control_manager_msgs/GoToWaypoint](https://bitbucket.org/fadacatec-ondemand/catec_control_manager_msgs/src/main/srv/GoToWaypoint.srv) | - |
+| /catec_control_manager/go_to_waypoint | [catec_control_manager_msgs/GoToWaypoint](https://github.com/catec/lucas/blob/ros2/catec_control_manager_msgs/srv/GoToWaypoint.srv) | - |
 | /catec_control_manager/set_mode_hover | [std_srvs/Trigger](https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Trigger.html) | - |
 | /catec_control_manager/set_mode_assisted | [std_srvs/Trigger](https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Trigger.html) | - |
 | /catec_control_manager/set_mode_offboard | [std_srvs/Trigger](https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Trigger.html) | - |

@@ -1,5 +1,10 @@
 # LUCAS: Lightweight framework for UAV Control And Supervision
 
+<div>
+  <a href="https://github.com/catec/lucas/tree/main"><img src="https://img.shields.io/badge/ROS1-Noetic-blue" /></a>
+  <a href="https://github.com/catec/lucas/tree/ros2"><img src="https://img.shields.io/badge/ROS2-Humble-blue" /></a>
+</div>
+
 Framework for UAV autonomous flight compatible with ArduPilot. The two modules that composed it are:
 
 - **CATEC Control Manager:** Finite-state-machine for mission and behavior control.
