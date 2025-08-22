@@ -14,10 +14,18 @@ Please check the README of each package for usage guidelines and more detailed i
 
 ## Citation
 
-> J.I. Murillo, M.A. Montes, R. Zahinos, M.A. Trujillo, A. Viguria and G. Heredia. ICUAS 2025. "Simplifying Autonomous Aerial Operations: LUCAS, a Lightweight framework for UAV Control And Supervision". **_UNDER REVISION_**
-
-If you use this data for any academic work, please cite our original paper: TBD
+If you use this data for any academic work, please cite our original paper:
 
 ```bibtex
-UNDER REVISION
+@INPROCEEDINGS{11007803,
+  author={Murillo, J.I. and Montes, M.A. and Zahinos, R. and Trujillo, M.A. and Viguria, A. and Heredia, G.},
+  booktitle={2025 International Conference on Unmanned Aircraft Systems (ICUAS)}, 
+  title={Simplifying Autonomous Aerial Operations: LUCAS, a Lightweight Framework for UAV Control and Supervision}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={854-861},
+  keywords={Buildings;Inspection;Autonomous aerial vehicles;Aircraft navigation;Libraries;Autopilot;Trajectory;Middleware;Monitoring;Robots},
+  doi={10.1109/ICUAS65942.2025.11007803}
+}
 ```
